@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
         // Convert to Eastern Time and reply
         char resp[MAX_LINE];
         proto_handle_server_request(line, resp, sizeof resp);
-        tls_send_line(&ssl, resp);
+        if (tls_send_line(&ssl, resp) < 0) { fprintf(stderr, "send failed\n"); }
 
     cleanup:
         mbedtls_ssl_close_notify(&ssl);

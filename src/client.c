@@ -1,6 +1,5 @@
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "common.h"
@@ -26,17 +25,14 @@ int main(int argc, char** argv) {
     proto_build_client_message(msg, sizeof msg);
     tls_send_line(&ssl, msg);
 
-    // Receive server's response (echo for now)
-    // Receive ET-converted reply from the server
-    char resp[MAX_LINE];
-    int n = tls_recv_line(&ssl, resp, sizeof resp);
-
     // -------- Baseline: print the echoed content --------
     // TODO: Replace this to parse ET message and print readable ET time + offset.
-     if (n > 0)
+    char resp[MAX_LINE];
+    if (tls_recv_line(&ssl, resp, sizeof resp) > 0)
         printf("Server replied with Eastern Time: %s\n", resp);
     else
-        fprintf(stderr, "recv failed\n");
+        fprintf(stderr, "No reply from server\n");
+
 
  // Cleanup TLS session
     mbedtls_ssl_close_notify(&ssl);
