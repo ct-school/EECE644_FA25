@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "common.h"
 #include "tls_utils.h"
 #include "proto.h"
@@ -21,21 +20,24 @@ int main(int argc, char** argv) {
     }
     fprintf(stderr, "Server listening on %s:%s (TLS)\n", bind_ip, port);
 
+    
     while (1) {
         mbedtls_ssl_context ssl;
         int cfd;
         if (tls_server_accept(lfd, &ssl, &cfd) != 0) { continue; }
         fprintf(stderr, "Client connected over TLS\n");
 
+        // Read PT string from client
         char line[MAX_LINE];
         int n = tls_recv_line(&ssl, line, sizeof line);
         if (n <= 0) { fprintf(stderr, "recv failed (%d)\n", n); goto cleanup; }
 
         // -------- Baseline: echo --------
         // TODO: Replace with PT->ET conversion in your final solution.
+        // Convert to Eastern Time and reply
         char resp[MAX_LINE];
         proto_handle_server_request(line, resp, sizeof resp);
-        if (tls_send_line(&ssl, resp) < 0) { fprintf(stderr, "send failed\n"); }
+        tls_send_line(&ssl, resp);
 
     cleanup:
         mbedtls_ssl_close_notify(&ssl);
