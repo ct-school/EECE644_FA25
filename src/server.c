@@ -27,7 +27,6 @@ int main(int argc, char** argv) {
         if (tls_server_accept(lfd, &ssl, &cfd) != 0) { continue; }
         fprintf(stderr, "Client connected over TLS\n");
 
-        // Read PT string from client
         char line[MAX_LINE];
         int n = tls_recv_line(&ssl, line, sizeof line);
         if (n <= 0) { fprintf(stderr, "recv failed (%d)\n", n); goto cleanup; }
@@ -36,8 +35,18 @@ int main(int argc, char** argv) {
         // TODO: Replace with PT->ET conversion in your final solution.
         // Convert to Eastern Time and reply
         char resp[MAX_LINE];
-        proto_handle_server_request(line, resp, sizeof resp);
-        if (tls_send_line(&ssl, resp) < 0) { fprintf(stderr, "send failed\n"); }
+        struct tm pt_tm = {0}, et_tm = {0};
+        int pt_offset = 0, et_offset = 0;
+
+        if (proto_parse_pt(line, &pt_tm, &pt_offset) == 0) {
+            convert_pt_to_et(&pt_tm, &et_tm, &et_offset);
+            proto_format_et(resp, sizeof(resp), &et_tm, et_offset);
+        } else {
+            snprintf(resp, sizeof(resp), "ERROR: Invalid PT format");
+        }
+
+        if (tls_send_line(&ssl, resp) < 0)
+            fprintf(stderr, "send failed\n");
 
     cleanup:
         mbedtls_ssl_close_notify(&ssl);

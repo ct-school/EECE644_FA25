@@ -1,7 +1,9 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include "common.h"
 #include "tls_utils.h"
 #include "proto.h"
@@ -22,19 +24,27 @@ int main(int argc, char** argv) {
     // TODO: Replace this to build and send your PT time message.
     // Build the Pacific-time message and send over TLS
     char msg[MAX_LINE];
-    proto_build_client_message(msg, sizeof msg);
-    tls_send_line(&ssl, msg);
+    time_t now = time(NULL);
+    struct tm pt_tm = *localtime(&now);
+    proto_format_pt(msg, sizeof(msg), &pt_tm, -480); // PT UTC-8
+    if (tls_send_line(&ssl, msg) < 0) {
+        fprintf(stderr, "send failed\n");
+        goto cleanup;
+    }
 
     // -------- Baseline: print the echoed content --------
     // TODO: Replace this to parse ET message and print readable ET time + offset.
     char resp[MAX_LINE];
-    if (tls_recv_line(&ssl, resp, sizeof resp) > 0)
-        printf("Server replied with Eastern Time: %s\n", resp);
-    else
-        fprintf(stderr, "No reply from server\n");
+    if (tls_recv_line(&ssl, resp, sizeof(resp)) <= 0) {
+        fprintf(stderr, "recv failed\n");
+        goto cleanup;
+    }
+
+    printf("Server replied with Eastern Time: %s\n", resp);
 
 
  // Cleanup TLS session
+cleanup:
     mbedtls_ssl_close_notify(&ssl);
     close(fd);
     mbedtls_ssl_free(&ssl);
