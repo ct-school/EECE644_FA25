@@ -82,6 +82,7 @@ int proto_parse_pt(const char* line, struct tm* out_tm, int* out_offset_minutes)
     out_tm->tm_min  = min;
     out_tm->tm_sec  = sec;
     *out_offset_minutes = offh * 60 + ((offh >= 0) ? offm : -offm);
+    out_tm->tm_isdst = -1; // account for DST
     return 0;
 }
 
@@ -97,7 +98,7 @@ int proto_format_et(char* out, size_t outsz, const struct tm* et_tm, int utc_off
 int proto_parse_et(const char* line, struct tm* out_tm, int* out_offset_minutes) {
     if (strncmp(line, "ET:", 3) != 0) return -1;
     int year, mon, day, hour, min, sec, offh, offm;
-    if (sscanf(line + 3, " %d-%d-%dT%d:%d:%d%3d:%2d",
+    if (sscanf(line + 3, " %d-%d-%dT%d:%d:%d%d:%d",
                &year, &mon, &day, &hour, &min, &sec, &offh, &offm) != 8)
         return -1;
     memset(out_tm, 0, sizeof(*out_tm));
@@ -108,6 +109,7 @@ int proto_parse_et(const char* line, struct tm* out_tm, int* out_offset_minutes)
     out_tm->tm_min  = min;
     out_tm->tm_sec  = sec;
     *out_offset_minutes = offh * 60 + ((offh >= 0) ? offm : -offm);
+    out_tm->tm_isdst = -1; // account for DST
     return 0;
 }
 
@@ -118,7 +120,7 @@ int convert_pt_to_et(const struct tm* pt_tm_in, struct tm* out_et_tm, int* out_e
     tzset();
 
     struct tm pt_copy = *pt_tm_in;
-
+    pt_copy.tm_isdst = -1; // account for DST
     // Convert Pacific local time to UTC epoch (mktime already adjusts for tm_gmtoff)
     time_t utc_epoch = mktime(&pt_copy);
 
