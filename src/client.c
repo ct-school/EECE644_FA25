@@ -1,4 +1,4 @@
-
+#define _XOPEN_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,11 +23,9 @@ int main(int argc, char** argv) {
     // -------- Baseline: send an echo message --------
     // TODO: Replace this to build and send your PT time message.
     // Build the Pacific-time message and send over TLS
-    char msg[MAX_LINE];
-    time_t now = time(NULL);
-    struct tm pt_tm = *localtime(&now);
-    proto_format_pt(msg, sizeof(msg), &pt_tm, -480); // PT UTC-8
-    if (tls_send_line(&ssl, msg) < 0) {
+    char line[MAX_LINE];
+    proto_build_client_message(line, sizeof line);
+    if (tls_send_line(&ssl, line) < 0) {
         fprintf(stderr, "send failed\n");
         goto cleanup;
     }
@@ -35,16 +33,25 @@ int main(int argc, char** argv) {
     // -------- Baseline: print the echoed content --------
     // TODO: Replace this to parse ET message and print readable ET time + offset.
     char resp[MAX_LINE];
-    if (tls_recv_line(&ssl, resp, sizeof(resp)) <= 0) {
-        fprintf(stderr, "recv failed\n");
+    int n = tls_recv_line(&ssl, resp, sizeof resp);
+    if (n <= 0) {
+        fprintf(stderr, "recv failed (%d)\n", n);
         goto cleanup;
     }
 
-    printf("Server replied with Eastern Time: %s\n", resp);
-
+    struct tm et_tm;
+    int et_offset;
+    if (proto_parse_et(resp, &et_tm, &et_offset) == 0) {
+        printf("Server replied with Eastern Time: ET: %04d-%02d-%02dT%02d:%02d:%02d%+03d:%02d\n",
+               et_tm.tm_year + 1900, et_tm.tm_mon + 1, et_tm.tm_mday,
+               et_tm.tm_hour, et_tm.tm_min, et_tm.tm_sec,
+               et_offset / 60, abs(et_offset % 60));
+    } else {
+        printf("Server replied: %s\n", resp);
+    }
 
  // Cleanup TLS session
-cleanup:
+    cleanup:
     mbedtls_ssl_close_notify(&ssl);
     close(fd);
     mbedtls_ssl_free(&ssl);

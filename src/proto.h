@@ -19,7 +19,7 @@ int proto_parse_pt(const char* line, struct tm* out_tm, int* out_offset_minutes)
  int proto_format_et(char* out, size_t outsz, const struct tm* et_tm, int utc_offset_minutes);
 
 // Parses an Eastern Time string (optional)
-//int proto_parse_et(const char* line, struct tm* out_tm, int* out_offset_minutes);
+int proto_parse_et(const char* line, struct tm* out_tm, int* out_offset_minutes);
 
 // Converts PT → ET 
 int convert_pt_to_et(const struct tm* pt_tm_in, struct tm* out_et_tm, int* out_et_offset_minutes);

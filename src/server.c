@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "common.h"
 #include "tls_utils.h"
 #include "proto.h"
@@ -35,16 +36,7 @@ int main(int argc, char** argv) {
         // TODO: Replace with PT->ET conversion in your final solution.
         // Convert to Eastern Time and reply
         char resp[MAX_LINE];
-        struct tm pt_tm = {0}, et_tm = {0};
-        int pt_offset = 0, et_offset = 0;
-
-        if (proto_parse_pt(line, &pt_tm, &pt_offset) == 0) {
-            convert_pt_to_et(&pt_tm, &et_tm, &et_offset);
-            proto_format_et(resp, sizeof(resp), &et_tm, et_offset);
-        } else {
-            snprintf(resp, sizeof(resp), "ERROR: Invalid PT format");
-        }
-
+        proto_handle_server_request(line, resp, sizeof(resp));
         if (tls_send_line(&ssl, resp) < 0)
             fprintf(stderr, "send failed\n");
 
