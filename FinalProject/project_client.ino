@@ -36,7 +36,7 @@ void crypto_init()
   mbedtls_entropy_init(&entropy);
   mbedtls_ctr_drbg_init(&ctr_drbg);
 
-  const char *pers = "random_seed";
+  const char *pers = "random_seed"; // this string helps generate a random nonce. This can be known by everyone and should still help create unique nonce
   mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, (const unsigned char*)pers, strlen(pers));
 
   mbedtls_ecp_group_init(&ecp_group);
@@ -185,6 +185,7 @@ void printHex(const uint8_t *data, size_t len)
   Serial.println();
 }
 
+// defines for bluetooth
 #define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
 #define CHARACTERISTIC_UUID "abcdefab-1234-5678-1234-abcdefabcdef"
 
