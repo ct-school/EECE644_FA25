@@ -329,7 +329,7 @@ void loop()
       size_t totalLen = 16 + cipherLen;
 
 
-      Serial.print("Sending Msg: ");
+      Serial.print("Msg to send: ");
       Serial.println(msg);
       Serial.print("Sending ciphertext: ");
       printHex(cipher, totalLen);
